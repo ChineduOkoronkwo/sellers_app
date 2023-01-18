@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "208858835955",
+    "project_id": "foodsellerapp-4fb6a",
+    "storage_bucket": "foodsellerapp-4fb6a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208858835955:android:2591cf670ba6431937c086",
+        "android_client_info": {
+          "package_name": "com.alfredokoronkwo.sellersapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "208858835955-4sgqj7m0uf4tf47o3lud35mjpva8ivfb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjbgzgwpF5VITjoYm3Hbtr-NxG0sc-6fE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "208858835955-4sgqj7m0uf4tf47o3lud35mjpva8ivfb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

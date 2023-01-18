@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellers_app/widgets/custom_text_filed.dart';
+import 'package:sellers_app/widgets/show_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,6 +11,10 @@ class RegisterScreen extends StatefulWidget {
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
+
+// 1. Perform validation
+// 2. Save Image
+// 3. Save Form
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -31,7 +36,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void signup() {
+    // TO-DO add image control validator
+    if (isValidImage() && _formKey.currentState!.validate()) {}
     print("Signup button was clicked");
+  }
+
+  bool isValidImage() {
+    if (imageXFile == null) {
+      showCustomDialog(context, "Please select an image!");
+      return false;
+    }
+    return true;
   }
 
   void getCurrentLocation() {
@@ -56,16 +71,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return 'Email address is invalid';
   }
 
+  String? validatePassword(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Password is required!';
+    }
+    if (value.length < 5) {
+      return 'Password must contain 5 or more characters!';
+    }
+    if (RegExp(
+            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)” + “(?=.*[-+_!@#$%^&*., ?]).+$')
+        .hasMatch(value)) {
+      return "Password must contain at least 1 lowercase, 1 uppercase, a number and a special character";
+    }
+    return null;
+  }
+
+  String? validateConfirmPass(String? confirmPassword, String? password) {
+    if (confirmPassword == null) {
+      return "Confirm password is required!";
+    }
+    if (password == null || confirmPassword != password) {
+      return "Confirm password does not match!";
+    }
+    return null;
+  }
+
+  String? validateConfirmPasswword(String? value) {
+    return validateConfirmPass(value, passwordController.text);
+  }
+
+  String? validatePhoneField(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Phone is required';
+    }
+    if (!RegExp(r'^(\+\d{1,2,3}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$')
+        .hasMatch(value)) {
+      return "Phone is invalid!";
+    }
+    return null;
+  }
+
   InkWell _getImagePicker() {
     return InkWell(
-      onTap: _getImage,
-      child: CircleAvatar(
-        radius: MediaQuery.of(context).size.width * 0.20,
-        backgroundColor: Colors.white,
-        backgroundImage:
-            imageXFile == null ? null : FileImage(File(imageXFile!.path)),
-        child: _getImageIcon(context),
-    ));
+        onTap: _getImage,
+        child: CircleAvatar(
+          radius: MediaQuery.of(context).size.width * 0.20,
+          backgroundColor: Colors.white,
+          backgroundImage:
+              imageXFile == null ? null : FileImage(File(imageXFile!.path)),
+          child: _getImageIcon(context),
+        ));
   }
 
   Widget? _getImageIcon(BuildContext context) {
@@ -98,17 +153,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         iconData: Icons.lock,
         hintText: "Password",
         obscureText: true,
+        validator: validatePassword,
       ),
       CustomTextField(
         controller: confirmPasswordController,
         iconData: Icons.lock,
         hintText: "Confirm Password",
         obscureText: true,
+        validator: validateConfirmPasswword,
       ),
       CustomTextField(
-          controller: phoneController,
-          iconData: Icons.phone,
-          hintText: "Phone"),
+        controller: phoneController,
+        iconData: Icons.phone,
+        hintText: "Phone",
+        validator: validatePhoneField,
+      ),
       CustomTextField(
           controller: locationController,
           iconData: Icons.my_location,
@@ -127,10 +186,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ElevatedButton _getElevatedButton() {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.amber,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-        minimumSize: const Size.fromHeight(50)
-      ),
+          backgroundColor: Colors.amber,
+          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+          minimumSize: const Size.fromHeight(50)),
       onPressed: signup,
       child: const Text(
         "Sign Up",
