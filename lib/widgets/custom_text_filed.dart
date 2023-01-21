@@ -11,7 +11,7 @@ class CustomTextField extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
 
-  CustomTextField({
+  const CustomTextField({super.key,
     required this.controller,
     required this.iconData,
     required this.hintText,

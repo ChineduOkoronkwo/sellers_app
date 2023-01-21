@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController passwordController = TextEditingController();
 
   void login() {
-    print("Login was clicked");
+    // print("Login was clicked");
   }
 
   Widget _getDpImage() {

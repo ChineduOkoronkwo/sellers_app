@@ -1,9 +1,14 @@
 import 'dart:io';
 
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellers_app/widgets/custom_text_filed.dart';
 import 'package:sellers_app/widgets/show_dialog.dart';
+import 'package:firebase_storage/firebase_storage.dart' as fstore;
+import 'package:uuid/uuid.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,8 +17,9 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-// 1. Perform validation
-// 2. Save Image
+// 1. Perform validation => done
+// 2. Get Location
+// 2. Save Image => done
 // 3. Save Form
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -27,6 +33,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   XFile? imageXFile;
   final ImagePicker _imagePicker = ImagePicker();
+  Position? position;
+  List<Placemark>? placemarks;
 
   Future<void> _getImage() async {
     imageXFile = await _imagePicker.pickImage(source: ImageSource.gallery);
@@ -35,22 +43,74 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  void signup() {
-    // TO-DO add image control validator
-    if (isValidImage() && _formKey.currentState!.validate()) {}
-    print("Signup button was clicked");
+  Future<void> getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error(
+          'Location services are disabled! Please enable it to proceed.');
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied!');
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Unable to reqest permission! Location permissions are permanently denied.');
+    }
+
+    position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    placemarks =
+        await placemarkFromCoordinates(position!.latitude, position!.longitude);
+
+    Placemark pMark = placemarks![0];
+    locationController.text =
+        '${pMark.subThoroughfare} ${pMark.thoroughfare}, ${pMark.subLocality} ${pMark.locality}, ${pMark.subAdministrativeArea}, ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
   }
+
+  Future<void> signup() async {
+    // TO-DO add image control validator
+    if (isValidImage() && _formKey.currentState!.validate()) {
+      // show loading dialog
+      showLoadingDialog(
+          context, "Please wait while we process your informtion!");
+
+      // upload image to firebase cloud storage
+      var filename = const Uuid().v1();
+      fstore.Reference reference = fstore.FirebaseStorage.instance
+          .ref()
+          .child("sellers")
+          .child(filename);
+      fstore.UploadTask uploadTask = reference.putFile(File(imageXFile!.path));
+      fstore.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      await taskSnapshot.ref.getDownloadURL().then((url) {
+        // createSellerAndSignUp(url);
+      });
+    }
+  }
+
+  // Future<void> createSellerAndSignUp(String imageUrl) async {
+  //   User? currentUser;
+  // }
 
   bool isValidImage() {
     if (imageXFile == null) {
-      showCustomDialog(context, "Please select an image!");
+      showErrorDialog(context, "Please select an image!");
       return false;
     }
     return true;
   }
 
-  void getCurrentLocation() {
-    print("Location button was clicked");
+  String? validateAddressField(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Address is required';
+    }
+    return null;
   }
 
   String? validateNameField(String? value) {
@@ -75,13 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Password is required!';
     }
-    if (value.length < 5) {
-      return 'Password must contain 5 or more characters!';
-    }
-    if (RegExp(
-            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)” + “(?=.*[-+_!@#$%^&*., ?]).+$')
+    if (!RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{6,13}$')
         .hasMatch(value)) {
-      return "Password must contain at least 1 lowercase, 1 uppercase, a number and a special character";
+      return "Password must contain at least 1 lowercase, 1 uppercase, a number and a number and must be 6 to 13 characters long";
     }
     return null;
   }
@@ -104,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Phone is required';
     }
-    if (!RegExp(r'^(\+\d{1,2,3}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$')
+    if (!RegExp(r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
         .hasMatch(value)) {
       return "Phone is invalid!";
     }
@@ -169,9 +225,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         validator: validatePhoneField,
       ),
       CustomTextField(
-          controller: locationController,
-          iconData: Icons.my_location,
-          hintText: "Address"),
+        controller: locationController,
+        iconData: Icons.my_location,
+        hintText: "Address",
+        validator: validateAddressField,
+      ),
       _getLocationButton(),
       const SizedBox(
         height: 20,
