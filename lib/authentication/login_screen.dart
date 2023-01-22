@@ -22,24 +22,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (_formKey.currentState!.validate()) {
       showLoadingDialog(context, 'Validating...');
-    }
 
-    User? currentUser;
-    await getFirebaseAuth()
+      await getFirebaseAuth()
         .signInWithEmailAndPassword(
-            email: emailController.text, password: passwordController.text)
-        .then((auth) {
-      currentUser = auth.user!;
-    }).catchError((error) {
-      Navigator.pop(context);
-      showErrorDialog(context, error.toString());
-    });
-
-    if (currentUser != null) {
-      await setUserDataLocally(currentUser!.uid).then((value) {
-        Navigator.pop(context);
-        Navigator.push(
-            context, MaterialPageRoute(builder: (c) => const HomeScreen()));
+              email: emailController.text, password: passwordController.text)
+          .then((auth) async {
+        await setUserDataLocally(auth.user!.uid).then((value) {
+          Navigator.pop(context);
+          Navigator.push(
+              context, MaterialPageRoute(builder: (c) => const HomeScreen()));
+        });
       }).catchError((error) {
         Navigator.pop(context);
         showErrorDialog(context, error.toString());
