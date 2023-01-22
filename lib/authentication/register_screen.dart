@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellers_app/global/global.dart';
+import 'package:sellers_app/services/local_services.dart';
 import 'package:sellers_app/widgets/custom_text_filed.dart';
 import 'package:sellers_app/widgets/show_dialog.dart';
 import 'package:firebase_storage/firebase_storage.dart' as fstore;
@@ -14,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../homescreen/home_screen.dart';
+import '../validation/user_validation.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -135,11 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     // save data locally
-    sharedPreferences = await SharedPreferences.getInstance();
-    await sharedPreferences!.setString("uid", currentUser.uid);
-    await sharedPreferences!.setString("email", currentUser.email.toString());
-    await sharedPreferences!.setString("name", nameController.text.trim());
-    await sharedPreferences!.setString("photoUrl", sellerImageUrl);
+    await setUserDataLocally(currentUser);
   }
 
   bool isValidImage() {
@@ -148,52 +146,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return false;
     }
     return true;
-  }
-
-  String? validateAddressField(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Address is required';
-    }
-    return null;
-  }
-
-  String? validateNameField(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Name is required';
-    }
-    return null;
-  }
-
-  String? validateEmailField(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Email is required';
-    }
-    if (RegExp(r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
-        .hasMatch(value)) {
-      return null;
-    }
-    return 'Email address is invalid';
-  }
-
-  String? validatePassword(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Password is required!';
-    }
-    if (!RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{6,13}$')
-        .hasMatch(value)) {
-      return "Password must contain at least 1 lowercase, 1 uppercase, a number and a number and must be 6 to 13 characters long";
-    }
-    return null;
-  }
-
-  String? validateConfirmPass(String? confirmPassword, String? password) {
-    if (confirmPassword == null) {
-      return "Confirm password is required!";
-    }
-    if (password == null || confirmPassword != password) {
-      return "Confirm password does not match!";
-    }
-    return null;
   }
 
   String? validateConfirmPasswword(String? value) {

@@ -1,5 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:sellers_app/global/global.dart';
+import 'package:sellers_app/homescreen/home_screen.dart';
+import 'package:sellers_app/validation/user_validation.dart';
+import 'package:sellers_app/widgets/show_dialog.dart';
 
+import '../services/local_services.dart';
 import '../widgets/custom_text_filed.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,8 +20,32 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  void login() {
-    // print("Login was clicked");
+  Future<void> login() async {
+    if (_formKey.currentState!.validate()) {
+      showLoadingDialog(context, 'Validating...');
+    }
+
+    User? currentUser;
+    await firebaseAuth
+        .signInWithEmailAndPassword(
+            email: emailController.text, password: passwordController.text)
+        .then((auth) {
+      currentUser = auth.user!;
+    }).catchError((error) {
+      Navigator.pop(context);
+      showErrorDialog(context, error.toString());
+    });
+
+    if (currentUser != null) {
+      await setUserDataLocally(currentUser!).then((value) {
+        Navigator.pop(context);
+        Navigator.push(
+            context, MaterialPageRoute(builder: (c) => const HomeScreen()));
+      }).catchError((error) {
+        Navigator.pop(context);
+        showErrorDialog(context, error.toString());
+      });
+    }
   }
 
   Widget _getDpImage() {
@@ -34,10 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
   ElevatedButton _getElevatedButton() {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.amber,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-        minimumSize: const Size.fromHeight(50)
-      ),
+          backgroundColor: Colors.amber,
+          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+          minimumSize: const Size.fromHeight(50)),
       onPressed: login,
       child: const Text(
         "Login",
@@ -64,12 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: emailController,
                   iconData: Icons.email,
                   hintText: "Email",
+                  validator: validateEmailField,
                 ),
                 CustomTextField(
                   controller: passwordController,
                   iconData: Icons.lock,
                   hintText: "Password",
                   obscureText: true,
+                  validator: validatePassword,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),

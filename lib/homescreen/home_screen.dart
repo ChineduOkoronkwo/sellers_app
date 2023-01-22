@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellers_app/authentication/auth_screen.dart';
+import 'package:sellers_app/services/local_services.dart';
 
 import '../global/global.dart';
 
@@ -30,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         title: Text(
-          sharedPreferences!.getString("name")!,
+          getUserName(),
         ),
         centerTitle: true,
         automaticallyImplyLeading: false,
