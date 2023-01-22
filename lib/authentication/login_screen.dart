@@ -1,11 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:sellers_app/global/global.dart';
 import 'package:sellers_app/homescreen/home_screen.dart';
 import 'package:sellers_app/validation/user_validation.dart';
 import 'package:sellers_app/widgets/show_dialog.dart';
 
-import '../services/local_services.dart';
+import '../services/user_service.dart';
 import '../widgets/custom_text_filed.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -26,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     User? currentUser;
-    await firebaseAuth
+    await getFirebaseAuth()
         .signInWithEmailAndPassword(
             email: emailController.text, password: passwordController.text)
         .then((auth) {
@@ -37,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (currentUser != null) {
-      await setUserDataLocally(currentUser!).then((value) {
+      await setUserDataLocally(currentUser!.uid).then((value) {
         Navigator.pop(context);
         Navigator.push(
             context, MaterialPageRoute(builder: (c) => const HomeScreen()));

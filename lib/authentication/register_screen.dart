@@ -1,18 +1,12 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sellers_app/global/global.dart';
-import 'package:sellers_app/services/local_services.dart';
+import 'package:sellers_app/services/user_service.dart';
 import 'package:sellers_app/widgets/custom_text_filed.dart';
 import 'package:sellers_app/widgets/show_dialog.dart';
-import 'package:firebase_storage/firebase_storage.dart' as fstore;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 import '../homescreen/home_screen.dart';
 import '../validation/user_validation.dart';
@@ -23,11 +17,6 @@ class RegisterScreen extends StatefulWidget {
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
-
-// 1. Perform validation => done
-// 2. Get Location => done
-// 2. Save Image => done
-// 3. Save Form =>
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -85,59 +74,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // show loading dialog
       showLoadingDialog(context, "Processing...");
 
-      // upload image to firebase cloud storage
-      var filename = const Uuid().v1();
-      String? sellerImageUrl;
-      fstore.Reference reference = fstore.FirebaseStorage.instance
-          .ref()
-          .child("sellers")
-          .child(filename);
-      fstore.UploadTask uploadTask = reference.putFile(File(imageXFile!.path));
-      fstore.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
-      await taskSnapshot.ref.getDownloadURL().then((url) {
-        sellerImageUrl = url;
-      });
-
-      // create seller and sign in
-      await createSellerAndSignUp(sellerImageUrl!).then((value) {
+      await uploadImage(imageXFile!.path).then((url) async {
+        var user =
+            await createSeller(emailController.text, passwordController.text);
+        await saveUserData(
+          user.uid,
+          emailController.text,
+          nameController.text,
+          url,
+          phoneController.text,
+          locationController.text,
+          position!,
+        );
+        await setUserDataLocally(user.uid);
+      }).then((value) {
         Navigator.pop(context);
-        Navigator.push(
-            context, MaterialPageRoute(builder: (c) => const HomeScreen()));
-      }).catchError((error, stackTrace) {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const HomeScreen()));
+      }).catchError((error) {
+        Navigator.pop(context);
         // Ideally, error should be pushed to a remote server.
         showErrorDialog(context, error.toString());
       });
     }
-  }
-
-  Future<void> createSellerAndSignUp(String sellerImageUrl) async {
-    User? currentUser;
-    await firebaseAuth
-        .createUserWithEmailAndPassword(
-            email: emailController.text, password: passwordController.text)
-        .then((auth) => {currentUser = auth.user});
-
-    if (currentUser != null) {
-      await saveUserDate(currentUser!, sellerImageUrl);
-    }
-  }
-
-  Future<void> saveUserDate(User currentUser, String sellerImageUrl) async {
-    FirebaseFirestore.instance.collection("sellers").doc(currentUser.uid).set({
-      "sellerUID": currentUser.uid,
-      "sellerEmail": currentUser.email,
-      "sellerName": nameController.text.trim(),
-      "sellerAvatarUrl": sellerImageUrl,
-      "phone": phoneController.text.trim(),
-      "address": locationController.text,
-      "status": "approved",
-      "earnings": 0.0,
-      "lat": position!.latitude,
-      "lng": position!.longitude,
-    });
-
-    // save data locally
-    await setUserDataLocally(currentUser);
   }
 
   bool isValidImage() {

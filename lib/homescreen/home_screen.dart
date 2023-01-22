@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellers_app/authentication/auth_screen.dart';
-import 'package:sellers_app/services/local_services.dart';
 
-import '../global/global.dart';
+import '../services/user_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           onPressed: ()
           {
-            firebaseAuth.signOut().then((value){
+            getFirebaseAuth().signOut().then((value){
               Navigator.push(context, MaterialPageRoute(builder: (c)=> const AuthScreen()));
             });
           },
