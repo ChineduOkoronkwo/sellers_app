@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sellers_app/homescreen/home_screen.dart';
 import 'package:sellers_app/validation/user_validation.dart';

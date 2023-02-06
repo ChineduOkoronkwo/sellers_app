@@ -38,7 +38,8 @@ Future<User> createSeller(String email, String password) async {
   return currentUser!;
 }
 
-Future<void> saveUserData(String uid, String email, String name, String imageUrl, String phone, String address, Position position) async {
+Future<void> saveUserData(String uid, String email, String name,
+    String imageUrl, String phone, String address, Position position) async {
   FirebaseFirestore.instance.collection("sellers").doc(uid).set({
     "sellerUID": uid,
     "sellerEmail": email,
@@ -71,4 +72,8 @@ Future<void> setUserDataLocally(String uid) async {
 
 String getUserName() {
   return sharedPreferences!.getString("name")!;
+}
+
+String getPhotoUrl() {
+  return sharedPreferences!.getString("photoUrl")!;
 }

@@ -110,17 +110,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return validateConfirmPass(value, passwordController.text);
   }
 
-  String? validatePhoneField(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Phone is required';
-    }
-    if (!RegExp(r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
-        .hasMatch(value)) {
-      return "Phone is invalid!";
-    }
-    return null;
-  }
-
   InkWell _getImagePicker() {
     return InkWell(
         onTap: _getImage,

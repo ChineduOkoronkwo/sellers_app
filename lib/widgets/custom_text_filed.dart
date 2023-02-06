@@ -25,10 +25,6 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final inputBorder = OutlineInputBorder(
-    //   borderSide: Divider.createBorderSide(context),
-    // );
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
